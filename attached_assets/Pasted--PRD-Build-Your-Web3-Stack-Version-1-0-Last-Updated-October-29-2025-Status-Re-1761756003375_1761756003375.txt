@@ -1,0 +1,739 @@
+# PRD: Build Your Web3 Stack
+
+**Version:** 1.0  
+**Last Updated:** October 29, 2025  
+**Status:** Ready for Development
+
+---
+
+## Overview
+
+A stack builder that lets users select Web3 products based on their needs (trading, gaming, payments) and shows compatibility across products using The Grid's relationship data.
+
+**Primary Goal:** Demonstrate The Grid's product relationship data while driving profile claims.
+
+**Secondary Goals:**
+- Showcase API capabilities to potential partners
+- Increase user engagement (2+ min sessions)
+- Drive "Claim Profile" conversions
+
+---
+
+## User Flow
+
+```
+1. Choose use case 
+   ↓
+2. Pick products (category by category)
+   ↓
+3. See compatibility visualization
+   ↓
+4. Export/Share stack
+```
+
+**Target Experience:** 5-minute interactive journey
+
+---
+
+## Use Case Templates
+
+### 🔄 Trading Stack
+1. **Wallet** (Required) - Product Type: `692`
+2. **DEX** (Required) - Product Type: `25`
+3. **Bridge** (Optional) - Product Type: `23`
+
+### 🎮 Gaming Stack
+1. **Wallet** (Required) - Product Type: `692`
+2. **Game** (Required) - Product Type: `36`
+3. **NFT Marketplace** (Optional) - Product Type: `37`
+
+### 💳 Payments Stack
+1. **Wallet** (Required) - Product Type: `692`
+2. **Payment Gateway** (Required) - Product Type: `1751027652-xe6GoNmeSGG8RhO49gMPvQ`
+3. **Bridge** (Optional) - Product Type: `23`
+
+### 🎨 NFT Stack
+1. **Wallet** (Required) - Product Type: `692`
+2. **NFT Marketplace** (Required) - Product Type: `37`
+3. **Bridge** (Optional) - Product Type: `23`
+
+### 👨‍💻 Developer Stack
+1. **Blockchain** (Required) - Product Types: `15`, `16`, `17` (L1/L2/L3)
+2. **RPC Provider** (Required) - Product Type: `305`
+3. **Developer Tools** (Required) - Product Type: `3607`
+
+---
+
+## Core GraphQL Queries
+
+### Query 1: Get Products by Category (with Connection Score)
+
+```graphql
+query GetProductsByType($productTypeIds: [String!], $limit: Int = 20) {
+  products(
+    where: {
+      productTypeId: {_in: $productTypeIds}
+      productStatusId: {_eq: "5"}
+    }
+    limit: $limit
+  ) {
+    id
+    name
+    description
+    productType {
+      name
+      definition
+    }
+    root {
+      profileInfos {
+        name
+        logo
+        icon
+        descriptionShort
+        profileSector {
+          name
+          slug
+        }
+      }
+      theGridRanking {
+        connectionScore
+      }
+    }
+    productDeployments {
+      smartContractDeployment {
+        deployedOnProduct {
+          id
+          name
+        }
+      }
+    }
+    productAssetRelationships(limit: 10) {
+      asset {
+        id
+        name
+        ticker
+        icon
+      }
+      assetSupportType {
+        name
+      }
+    }
+  }
+}
+```
+
+**Variables:**
+```json
+{
+  "productTypeIds": ["692"],
+  "limit": 20
+}
+```
+
+**Usage:** Fetch products for each category. Sort by connection score **client-side** after fetching.
+
+**Important Notes:**
+- **Profile-first approach:** Always use `root.profileInfos` for display data (logo, icon, name, sector)
+- **Connection score:** Cannot be used for server-side ordering, must sort client-side
+- **Logos:** Use `profileInfos.logo` for product cards (not product.logo)
+
+---
+
+### Query 2: Get Product Relationships (for Compatibility Check)
+
+```graphql
+query GetProductRelationships($productIds: [uuid!]!) {
+  products(where: {id: {_in: $productIds}}) {
+    id
+    name
+    root {
+      profileInfos {
+        name
+        logo
+        icon
+        descriptionShort
+        profileSector {
+          name
+          slug
+        }
+      }
+      theGridRanking {
+        connectionScore
+      }
+    }
+    supportsProducts {
+      supportsProduct {
+        id
+        name
+      }
+    }
+    productAssetRelationships {
+      asset {
+        id
+        name
+        ticker
+      }
+    }
+    productDeployments {
+      smartContractDeployment {
+        deployedOnProduct {
+          id
+          name
+        }
+      }
+    }
+  }
+}
+```
+
+**Variables:**
+```json
+{
+  "productIds": ["uuid1", "uuid2", "uuid3"]
+}
+```
+
+**Usage:** Check compatibility between selected products in the stack. Use `root.profileInfos` for display.
+
+---
+
+### Query 3: Get Product Details (for Modal/Expanded View)
+
+```graphql
+query GetProductDetails($productId: uuid!) {
+  products(where: {id: {_eq: $productId}}) {
+    id
+    name
+    description
+    launchDate
+    productType {
+      name
+      definition
+    }
+    root {
+      profileInfos {
+        name
+        logo
+        icon
+        descriptionShort
+        descriptionLong
+        tagLine
+        profileSector {
+          name
+        }
+      }
+      theGridRanking {
+        connectionScore
+      }
+    }
+    productDeployments {
+      smartContractDeployment {
+        deployedOnProduct {
+          name
+        }
+        smartContracts {
+          address
+          name
+        }
+      }
+    }
+    productAssetRelationships {
+      asset {
+        name
+        ticker
+        icon
+      }
+      assetSupportType {
+        name
+      }
+    }
+    supportsProducts {
+      supportsProduct {
+        name
+        productType {
+          name
+        }
+      }
+    }
+    urls {
+      urlType {
+        name
+      }
+      url
+    }
+  }
+}
+```
+
+**Variables:**
+```json
+{
+  "productId": "specific-uuid"
+}
+```
+
+**Usage:** Show detailed information when user clicks on a product card
+
+---
+
+## Compatibility Logic
+
+### Simplified Scoring Algorithm
+
+Products are compatible if they share chains or assets. Score calculated as:
+
+```typescript
+function calculateCompatibility(product, stack) {
+  let score = 0;
+  const reasons = [];
+  
+  // 1. Shared chains (10 points each, max 30)
+  const productChains = product.productDeployments.map(
+    d => d.smartContractDeployment.deployedOnProduct.id
+  );
+  const stackChains = stack.flatMap(p => 
+    p.productDeployments.map(d => d.smartContractDeployment.deployedOnProduct.id)
+  );
+  const sharedChains = intersection(productChains, stackChains);
+  const chainScore = Math.min(30, sharedChains.length * 10);
+  score += chainScore;
+  
+  if (sharedChains.length > 0) {
+    reasons.push(`Shares ${sharedChains.length} chain(s)`);
+  }
+  
+  // 2. Shared assets (10 points each, max 30)
+  const productAssets = product.productAssetRelationships.map(a => a.asset.id);
+  const stackAssets = stack.flatMap(p => 
+    p.productAssetRelationships.map(a => a.asset.id)
+  );
+  const sharedAssets = intersection(productAssets, stackAssets);
+  const assetScore = Math.min(30, sharedAssets.length * 10);
+  score += assetScore;
+  
+  if (sharedAssets.length > 0) {
+    reasons.push(`Supports ${sharedAssets.length} common asset(s)`);
+  }
+  
+  return {
+    score,
+    compatible: score >= 30,
+    reasons,
+    sharedChains,
+    sharedAssets
+  };
+}
+```
+
+**Compatibility Threshold:** 30+ points = Compatible
+
+**Visual Indicators:**
+- ✅ Green: Compatible (30+ points)
+- ⚠️ Yellow: Partial (10-29 points)
+- ❌ Red: Incompatible (0-9 points)
+
+---
+
+## Product Ranking Strategy
+
+Products are displayed in order of **Connection Score** (from `theGridRanking`):
+
+1. **High Connection (80-100):** Most popular/integrated products
+2. **Medium Connection (50-79):** Well-connected products
+3. **Low Connection (1-49):** Emerging products
+4. **No Score (null):** New/unclaimed profiles
+
+**Important: Client-Side Sorting**
+
+Connection scores **cannot be used for server-side filtering/ordering**. Instead:
+
+```typescript
+// After fetching products from API
+function sortByConnectionScore(products: Product[]) {
+  return products.sort((a, b) => {
+    const scoreA = a.root.theGridRanking?.connectionScore ?? 0;
+    const scoreB = b.root.theGridRanking?.connectionScore ?? 0;
+    return scoreB - scoreA; // Descending order
+  });
+}
+
+// Usage
+const products = await fetchProducts(productTypeIds);
+const sortedProducts = sortByConnectionScore(products);
+```
+
+**UI Treatment:**
+- Show connection score badge on product cards
+- Filter option: "Most Popular" (default), "All Products"
+- Sort maintains connection score order (client-side)
+
+---
+
+## Profile-First Data Approach
+
+**Critical:** Always use `root.profileInfos` for display data, never product-level fields.
+
+### Why Profile-First?
+
+The Grid uses a profile-first architecture where:
+- **Profile** = The company/organization (e.g., "Uniswap Labs")
+- **Product** = Specific offering (e.g., "Uniswap V3")
+- Logos, icons, names, and sectors live at the **profile level**
+
+### Data Hierarchy
+
+```
+Product
+└── root
+    ├── profileInfos          ← USE THIS for display
+    │   ├── name             ← Display name
+    │   ├── logo             ← Primary image (use for cards)
+    │   ├── icon             ← Icon/avatar
+    │   ├── descriptionShort ← Short description
+    │   └── profileSector    ← Category (DeFi, Gaming, etc.)
+    │       ├── name
+    │       └── slug
+    └── theGridRanking
+        └── connectionScore   ← Popularity metric
+```
+
+### Display Pattern
+
+```typescript
+// ✅ CORRECT: Use profile data
+<ProductCard
+  name={product.root.profileInfos.name}
+  logo={product.root.profileInfos.logo}
+  icon={product.root.profileInfos.icon}
+  description={product.root.profileInfos.descriptionShort}
+  sector={product.root.profileInfos.profileSector?.name}
+  connectionScore={product.root.theGridRanking?.connectionScore}
+/>
+
+// ❌ INCORRECT: Don't use product-level data
+<ProductCard
+  name={product.name}  // Don't use this
+  logo={product.logo}  // This won't exist
+/>
+```
+
+---
+
+## Technical Implementation
+
+### Architecture
+
+```
+Frontend (Next.js 14)
+├── /app
+│   ├── /stack-builder
+│   │   ├── page.tsx              # Main builder interface
+│   │   ├── [useCase]/page.tsx    # Use case specific flow
+│   │   └── /components
+│   │       ├── UseCaseSelector.tsx
+│   │       ├── ProductCard.tsx
+│   │       ├── CompatibilityGraph.tsx
+│   │       └── ExportModal.tsx
+│   └── /api
+│       └── /graphql
+│           └── route.ts          # GraphQL proxy
+├── /lib
+│   ├── graphql-client.ts         # Apollo/URQL setup
+│   ├── compatibility.ts          # Scoring logic
+│   └── analytics.ts              # Event tracking
+└── /store
+    └── stackStore.ts             # Zustand state management
+```
+
+### State Management (Zustand)
+
+```typescript
+interface StackState {
+  useCase: string | null;
+  selectedProducts: Record<string, Product>;
+  compatibility: CompatibilityResult[];
+  
+  setUseCase: (useCase: string) => void;
+  addProduct: (category: string, product: Product) => void;
+  removeProduct: (category: string) => void;
+  calculateCompatibility: () => void;
+  reset: () => void;
+}
+```
+
+### Caching Strategy
+
+- **Product Lists:** 5 minute TTL (frequently accessed)
+- **Product Details:** 1 hour TTL (less frequent)
+- **Connection Scores:** 1 hour TTL (relatively stable)
+- **Use CDN:** Cache GraphQL responses at edge
+
+---
+
+## MVP Implementation Timeline
+
+### Week 1: Core Functionality
+**Goal:** Working product selection flow
+
+- [ ] Set up Next.js project with Tailwind
+- [ ] Integrate GraphQL client (endpoint: `beta.node.thegrid.id`)
+- [ ] Build use case selection screen
+- [ ] Create product card component with connection score badge
+- [ ] Implement product selection for 3 categories
+- [ ] Test all queries against production API
+
+### Week 2: Compatibility & Visualization
+**Goal:** Show relationships between products
+
+- [ ] Implement compatibility scoring algorithm
+- [ ] Build compatibility graph visualization (React Flow)
+- [ ] Add visual indicators (green/yellow/red)
+- [ ] Show compatibility reasons ("Shares 2 chains")
+- [ ] Add product detail modal
+- [ ] Test with different product combinations
+
+### Week 3: Polish & Launch
+**Goal:** Production-ready with analytics
+
+- [ ] Add PNG export functionality
+- [ ] Implement share link generation
+- [ ] Add "Claim Profile" CTA with tracking
+- [ ] Integrate PostHog analytics
+- [ ] Add loading states and error handling
+- [ ] QA testing across browsers
+- [ ] Deploy to production (Vercel)
+
+---
+
+## Analytics & Success Metrics
+
+### Events to Track
+
+```typescript
+// User journey
+trackEvent('stack_builder_started', { use_case: string });
+trackEvent('use_case_selected', { use_case: string });
+trackEvent('product_added', { 
+  product_id: string, 
+  category: string,
+  connection_score: number 
+});
+trackEvent('product_removed', { product_id: string, category: string });
+trackEvent('compatibility_viewed', { 
+  stack_size: number,
+  avg_compatibility_score: number 
+});
+
+// Conversions
+trackEvent('stack_completed', { 
+  use_case: string,
+  product_count: number,
+  avg_connection_score: number 
+});
+trackEvent('stack_exported', { format: 'png' | 'link' });
+trackEvent('stack_shared', { platform: string });
+trackEvent('claim_profile_clicked', { 
+  source: 'stack_builder',
+  product_id?: string 
+});
+```
+
+### Success KPIs
+
+| Metric | Target | Measurement |
+|--------|--------|-------------|
+| Completion Rate | >40% | Users who complete a stack |
+| Products per Stack | 3+ avg | Average products selected |
+| Export Rate | >25% | Stacks exported/shared |
+| Session Time | 2+ min | Average time in builder |
+| Claim CTR | >8% | "Claim Profile" click rate |
+| Return Users | >15% | Users who build 2+ stacks |
+
+---
+
+## UI/UX Specifications
+
+### Product Card Design
+
+```
+┌─────────────────────────────────────┐
+│  [Logo]   Profile Name        [87]  │ ← Connection Score Badge
+│  Product Type • Sector               │
+│  Short description from profile...   │
+│  ✓ Supports USDC, ETH               │
+│  [Select Product]                    │
+└─────────────────────────────────────┘
+```
+
+**Data Mapping:**
+- Logo: `root.profileInfos.logo` (primary) or `root.profileInfos.icon` (fallback)
+- Name: `root.profileInfos.name`
+- Product Type: `productType.name`
+- Sector: `root.profileInfos.profileSector.name`
+- Description: `root.profileInfos.descriptionShort`
+- Connection Score: `root.theGridRanking.connectionScore`
+
+**Card States:**
+- Default: White background, subtle border
+- Hover: Elevated shadow, border highlight
+- Selected: Blue border, checkmark icon
+- Incompatible: Red border, warning icon
+
+### Compatibility Graph
+
+```
+     [Wallet]
+        ↓
+    [Bridge] ──→ [DEX]
+    
+✅ Compatible (chains & assets match)
+⚠️  Partial (only chains match)
+```
+
+**Visual Treatment:**
+- Green lines: Compatible connections
+- Yellow lines: Partial compatibility
+- Red lines: Incompatible (show warning)
+- Dashed lines: No data (neutral)
+
+---
+
+## Data Requirements Checklist
+
+✅ **Confirmed Available:**
+- 10+ products per category
+- Asset relationships are tagged
+- No API rate limits
+- Connection scores available via `theGridRanking`
+
+**Minimum Data Quality:**
+- All products have: name, description, logo, status="Live"
+- Products have at least 1 deployment (chain)
+- At least 3 options per category
+- Connection scores present for popular products
+
+**Edge Case Handling:**
+- No connection score → Show at bottom of list
+- Missing logo → Use placeholder with initials
+- No deployments → Mark as "Coming Soon"
+- Low compatibility → Show warning + alternatives
+
+---
+
+## Future Enhancements (Post-MVP)
+
+### Phase 2 (Month 2)
+- Add all 5 use case templates
+- Community stack gallery (save & share stacks)
+- PDF export with full product details
+- Mobile responsive design
+
+### Phase 3 (Month 3)
+- AI-powered stack recommendations
+- Real-time integration testing (check if integrations actually work)
+- Stack templates from Web3 experts
+- Performance metrics (TVL, volume) on cards
+
+### Phase 4 (Month 4+)
+- White-label versions for ecosystem partners
+- API access for programmatic stack building
+- Security scores and audits display
+- Multi-language support
+
+---
+
+## Open Questions & Decisions
+
+### Resolved ✅
+- ✅ Sufficient product data available
+- ✅ Asset relationships consistently tagged
+- ✅ No API rate limits
+- ✅ Use connection score for "Most Popular" sorting (client-side only)
+- ✅ Always use `root.profileInfos` for display data (logos, names, descriptions)
+- ✅ Connection score cannot be used for server-side filtering/ordering
+
+### Pending 🤔
+- Design system and brand assets location?
+- Should we show TVL/volume metrics on cards?
+- Integration with existing Grid websites?
+- Launch partners to target first?
+
+---
+
+## Launch Checklist
+
+### Pre-Launch
+- [ ] Test queries with production data
+- [ ] Create marketing assets (screenshots, demo video)
+- [ ] Set up analytics dashboard
+- [ ] Write documentation/help text
+- [ ] Test with 10 beta users
+- [ ] Fix critical bugs
+
+### Launch Day
+- [ ] Deploy to production
+- [ ] Announce on Twitter/LinkedIn
+- [ ] Post in Web3 communities (Reddit, Discord)
+- [ ] Email ecosystem partners
+- [ ] Monitor analytics closely
+
+### Post-Launch (Week 1)
+- [ ] Daily analytics review
+- [ ] Collect user feedback
+- [ ] Fix bugs and quick wins
+- [ ] Plan iteration #2
+
+---
+
+## API Reference
+
+**Endpoint:** `https://beta.node.thegrid.id/v1/graphql`
+
+**Key Product Type IDs:**
+```
+Wallets: 692
+Bridges: 23
+DEXs: 25
+L1 Chains: 15
+L2 Chains: 16
+L3 Chains: 17
+Games: 36
+NFT Marketplaces: 37
+RPC Providers: 305
+Developer Tools: 3607
+Payment Gateways: 1751027652-xe6GoNmeSGG8RhO49gMPvQ
+```
+
+**Status IDs:**
+```
+Live: 5
+Active: 2
+Announced: 1
+Inactive: 3
+```
+
+**Asset Support Types:**
+```
+Native to: 1
+Supported by: 2
+Governance: 5
+Managed by: 6
+```
+
+---
+
+## Contact & Resources
+
+**Project Lead:** Jonathan  
+**Timeline:** 3 weeks to MVP  
+**Tech Stack:** Next.js 14, GraphQL, React Flow, Tailwind, Zustand  
+**Deployment:** Vercel  
+
+**Resources:**
+- API Docs: `api@thegrid.id`
+- Design System: TBD
+- Analytics: PostHog/Mixpanel
+
+---
+
+*This PRD is ready for development. All queries are validated and data requirements are confirmed.*
