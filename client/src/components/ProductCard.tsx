@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Check, AlertCircle, TrendingUp } from "lucide-react";
 import type { Product } from "@shared/schema";
 
@@ -50,6 +51,33 @@ export function ProductCard({
         compatibilityStatus === 'incompatible' ? 'border-destructive/50' : ''
       }`}
     >
+      {/* Debug Hover Badge */}
+      <div className="absolute top-4 left-4 z-10">
+        <HoverCard openDelay={0}>
+          <HoverCardTrigger asChild>
+            <Badge 
+              variant="destructive" 
+              className="rounded-full px-2 py-0.5 text-[10px] font-bold cursor-pointer"
+              data-testid={`badge-debug-${product.id}`}
+            >
+              DE
+            </Badge>
+          </HoverCardTrigger>
+          <HoverCardContent 
+            side="right" 
+            align="start" 
+            className="w-[600px] max-h-[500px] overflow-auto p-4"
+          >
+            <div className="space-y-2">
+              <h4 className="font-semibold text-sm">Raw Product Data</h4>
+              <pre className="text-xs bg-muted p-3 rounded overflow-auto">
+                {JSON.stringify(product, null, 2)}
+              </pre>
+            </div>
+          </HoverCardContent>
+        </HoverCard>
+      </div>
+
       {/* Connection Score Badge */}
       {connectionScore !== undefined && connectionScore > 0 && (
         <div className="absolute top-4 right-4">
