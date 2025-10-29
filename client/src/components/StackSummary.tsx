@@ -42,7 +42,7 @@ export function StackSummary({
       <div className="space-y-3">
         {productArray.map(([categoryName, product]) => {
           const profile = product.root.profileInfos;
-          const imageUrl = profile.logo || profile.icon;
+          const imageUrl = profile.icon || profile.logo;
           const initials = profile.name?.substring(0, 2).toUpperCase() || '??';
 
           return (

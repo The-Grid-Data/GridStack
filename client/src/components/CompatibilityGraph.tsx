@@ -77,7 +77,7 @@ export function CompatibilityGraph({ products, compatibility }: CompatibilityGra
         <div className="grid gap-4">
           {products.map((product) => {
             const profile = product.root.profileInfos;
-            const imageUrl = profile.logo || profile.icon;
+            const imageUrl = profile.icon || profile.logo;
             const initials = profile.name?.substring(0, 2).toUpperCase() || '??';
             const connectionScore = product.root.theGridRanking?.connectionScore;
 

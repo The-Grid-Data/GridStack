@@ -31,8 +31,8 @@ export function ProductCard({
     else compatibilityStatus = 'incompatible';
   }
 
-  // Get logo or use icon as fallback
-  const imageUrl = profile.logo || profile.icon;
+  // Use icon (square) instead of logo (rectangular)
+  const imageUrl = profile.icon || profile.logo;
   // Use product name for initials, not profile name
   const initials = product.name?.substring(0, 2).toUpperCase() || '??';
 

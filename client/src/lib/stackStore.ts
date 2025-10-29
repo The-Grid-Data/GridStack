@@ -133,20 +133,9 @@ function calculatePairwiseCompatibility(
 
 // Helper to sort products by connection score (client-side)
 export function sortByConnectionScore(products: Product[]): Product[] {
-  const sorted = [...products].sort((a, b) => {
+  return [...products].sort((a, b) => {
     const scoreA = a.root.theGridRanking?.connectionScore ?? 0;
     const scoreB = b.root.theGridRanking?.connectionScore ?? 0;
     return scoreB - scoreA; // Descending order - highest first
   });
-  
-  // Debug logging - show top 20 products with scores
-  console.log('🔢 Sorted products by connection score (Top 20):', 
-    sorted.slice(0, 20).map((p, index) => ({
-      rank: index + 1,
-      name: p.name,
-      connectionScore: p.root.theGridRanking?.connectionScore ?? 0
-    }))
-  );
-  
-  return sorted;
 }

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ProgressHeader } from "@/components/ProgressHeader";
 import { ProductCard } from "@/components/ProductCard";
@@ -108,6 +108,18 @@ export default function ProductSelection({ onBack, onComplete }: ProductSelectio
   };
 
   const currentSelection = selectedProducts.get(currentCategory.name);
+
+  // Add Enter key handler to continue after selection
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === "Enter" && currentSelection) {
+        handleNext();
+      }
+    };
+
+    window.addEventListener("keypress", handleKeyPress);
+    return () => window.removeEventListener("keypress", handleKeyPress);
+  }, [currentSelection]);
 
   return (
     <div className="min-h-screen bg-background">

@@ -33,7 +33,7 @@ export function ProductDetailModal({
 
   const profile = product.root.profileInfos;
   const connectionScore = product.root.theGridRanking?.connectionScore;
-  const imageUrl = profile.logo || profile.icon;
+  const imageUrl = profile.icon || profile.logo;
   const initials = profile.name?.substring(0, 2).toUpperCase() || '??';
 
   // Find compatible products in stack

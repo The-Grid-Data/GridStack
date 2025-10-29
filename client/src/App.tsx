@@ -4,6 +4,8 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import UseCaseSelection from "@/pages/UseCaseSelection";
 import ProductSelection from "@/pages/ProductSelection";
 import CompatibilityResults from "@/pages/CompatibilityResults";
@@ -43,6 +45,10 @@ function AppContent() {
 
   return (
     <>
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
+      
       {step === 'use-case' && (
         <UseCaseSelection onSelectUseCase={handleSelectUseCase} />
       )}
@@ -67,10 +73,12 @@ function AppContent() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AppContent />
-        <Toaster />
-      </TooltipProvider>
+      <ThemeProvider>
+        <TooltipProvider>
+          <AppContent />
+          <Toaster />
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
