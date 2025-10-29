@@ -7,6 +7,7 @@ import { AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 export default function Debug() {
   const [testing, setTesting] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [queryInfo, setQueryInfo] = useState<any>(null);
 
   const testQuery = async () => {
     setTesting(true);
@@ -16,6 +17,7 @@ export default function Debug() {
       const response = await fetch('/api/debug/test-query');
       const data = await response.json();
       setResult(data);
+      setQueryInfo(data.queryInfo);
     } catch (error) {
       setResult({
         status: 'error',
@@ -60,6 +62,37 @@ export default function Debug() {
             </Button>
           </CardContent>
         </Card>
+
+        {queryInfo && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Query Details</CardTitle>
+              <CardDescription>The GraphQL query being sent to The Grid API</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <h3 className="font-semibold text-sm mb-2">Endpoint:</h3>
+                <code className="text-xs bg-muted p-2 rounded block">
+                  {queryInfo.endpoint}
+                </code>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold text-sm mb-2">Variables:</h3>
+                <pre className="text-xs bg-muted p-4 rounded overflow-auto">
+                  {JSON.stringify(queryInfo.variables, null, 2)}
+                </pre>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold text-sm mb-2">GraphQL Query:</h3>
+                <pre className="text-xs bg-muted p-4 rounded overflow-auto max-h-96">
+                  {queryInfo.query}
+                </pre>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {result && (
           <Card>

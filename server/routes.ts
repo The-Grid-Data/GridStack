@@ -254,6 +254,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         productCount: products.length,
         firstProduct: products[0],
         allProducts: products,
+        queryInfo: {
+          endpoint: GRID_API_URL,
+          query: GET_PRODUCTS_BY_TYPE_QUERY,
+          variables: { productTypeIds, limit },
+        },
       });
     } catch (error) {
       console.error("Debug endpoint error:", error);
