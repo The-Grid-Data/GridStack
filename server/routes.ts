@@ -26,6 +26,8 @@ const GET_PRODUCTS_BY_TYPE_QUERY = `
           logo
           icon
           descriptionShort
+          descriptionLong
+          tagLine
           profileSector {
             name
             slug
@@ -137,6 +139,8 @@ const GET_PRODUCT_RELATIONSHIPS_QUERY = `
           logo
           icon
           descriptionShort
+          descriptionLong
+          tagLine
           profileSector {
             name
             slug

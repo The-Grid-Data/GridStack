@@ -32,7 +32,8 @@ export function ProductCard({
 
   // Get logo or use icon as fallback
   const imageUrl = profile.logo || profile.icon;
-  const initials = profile.name?.substring(0, 2).toUpperCase() || '??';
+  // Use product name for initials, not profile name
+  const initials = product.name?.substring(0, 2).toUpperCase() || '??';
 
   // Get supported assets (limit to 3 for display)
   const supportedAssets = product.productAssetRelationships
@@ -43,7 +44,7 @@ export function ProductCard({
   return (
     <Card
       data-testid={`card-product-${product.id}`}
-      className={`relative p-4 md:p-6 transition-all duration-150 hover-elevate ${
+      className={`relative p-6 md:p-8 transition-all duration-150 hover-elevate ${
         selected ? 'border-primary ring-2 ring-primary/20' : ''
       } ${
         compatibilityStatus === 'incompatible' ? 'border-destructive/50' : ''
@@ -70,30 +71,36 @@ export function ProductCard({
         </div>
       )}
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-5">
         {/* Logo/Icon */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {imageUrl ? (
             <img 
               src={imageUrl} 
-              alt={profile.name}
-              className="w-12 h-12 md:w-16 md:h-16 rounded-lg object-cover"
+              alt={product.name}
+              className="w-16 h-16 md:w-20 md:h-20 rounded-lg object-contain bg-card"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
               }}
             />
           ) : (
-            <div className="w-12 h-12 md:w-16 md:h-16 rounded-lg bg-primary/10 flex items-center justify-center">
-              <span className="text-lg font-semibold text-primary">{initials}</span>
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-lg bg-primary/10 flex items-center justify-center">
+              <span className="text-xl font-semibold text-primary">{initials}</span>
             </div>
           )}
         </div>
 
         {/* Product Info */}
-        <div className="flex-1 space-y-2">
-          <h3 className="text-lg font-semibold line-clamp-1" data-testid={`text-name-${product.id}`}>
-            {profile.name}
+        <div className="flex-1 space-y-3">
+          <h3 className="text-xl font-semibold" data-testid={`text-name-${product.id}`}>
+            {product.name}
           </h3>
+          
+          {profile.tagLine && (
+            <p className="text-sm font-medium text-foreground/90 leading-relaxed">
+              {profile.tagLine}
+            </p>
+          )}
           
           <div className="flex flex-wrap gap-2">
             {product.productType && (
@@ -109,7 +116,7 @@ export function ProductCard({
           </div>
 
           {profile.descriptionShort && (
-            <p className="text-sm text-muted-foreground leading-normal line-clamp-2">
+            <p className="text-sm text-muted-foreground leading-relaxed">
               {profile.descriptionShort}
             </p>
           )}
@@ -139,20 +146,27 @@ export function ProductCard({
         )}
 
         {/* Actions */}
-        <div className="flex gap-2">
+        <div className="flex gap-3 pt-2">
           <Button
             onClick={onSelect}
-            variant={selected ? "secondary" : "default"}
-            size="sm"
+            variant={selected ? "default" : "outline"}
+            size="default"
             className="flex-1"
             data-testid={`button-select-${product.id}`}
           >
-            {selected ? 'Selected' : 'Select Product'}
+            {selected ? (
+              <>
+                <Check className="w-4 h-4 mr-2" />
+                Selected
+              </>
+            ) : (
+              'Select Product'
+            )}
           </Button>
           <Button
             onClick={onViewDetails}
             variant="ghost"
-            size="sm"
+            size="default"
             data-testid={`button-details-${product.id}`}
           >
             Details
