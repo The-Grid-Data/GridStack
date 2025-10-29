@@ -54,14 +54,10 @@ export function ProductCard({
       {/* Debug Hover Badge */}
       <div className="absolute top-4 left-4 z-10">
         <HoverCard openDelay={0}>
-          <HoverCardTrigger asChild>
-            <Badge 
-              variant="destructive" 
-              className="rounded-full px-2 py-0.5 text-[10px] font-bold cursor-pointer"
-              data-testid={`badge-debug-${product.id}`}
-            >
+          <HoverCardTrigger>
+            <div className="bg-destructive text-destructive-foreground rounded-full px-2 py-0.5 text-[10px] font-bold cursor-pointer">
               DE
-            </Badge>
+            </div>
           </HoverCardTrigger>
           <HoverCardContent 
             side="right" 
