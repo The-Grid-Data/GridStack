@@ -197,6 +197,74 @@ async function queryGraphQL(query: string, variables: any) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Debug endpoint to test GraphQL queries
+  app.get("/api/debug/test-query", async (req, res) => {
+    try {
+      const productTypeIds = ["1"]; // Wallet type
+      const limit = 3;
+      
+      console.log("=== DEBUG: Testing GraphQL Query ===");
+      console.log("Query:", GET_PRODUCTS_BY_TYPE_QUERY);
+      console.log("Variables:", { productTypeIds, limit });
+      
+      const response = await fetch(GRID_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: GET_PRODUCTS_BY_TYPE_QUERY,
+          variables: { productTypeIds, limit },
+        }),
+      });
+      
+      const responseText = await response.text();
+      console.log("Response status:", response.status);
+      console.log("Response text:", responseText);
+      
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        return res.status(500).json({
+          error: "Failed to parse GraphQL response",
+          status: response.status,
+          responseText,
+        });
+      }
+      
+      if (data.errors) {
+        console.error("GraphQL Errors:", JSON.stringify(data.errors, null, 2));
+        return res.status(200).json({
+          status: "error",
+          graphqlErrors: data.errors,
+          data: data.data,
+          rawResponse: data,
+        });
+      }
+      
+      const products = data.data?.products || [];
+      console.log(`Found ${products.length} products`);
+      if (products.length > 0) {
+        console.log("First product structure:", JSON.stringify(products[0], null, 2));
+      }
+      
+      return res.json({
+        status: "success",
+        productCount: products.length,
+        firstProduct: products[0],
+        allProducts: products,
+      });
+    } catch (error) {
+      console.error("Debug endpoint error:", error);
+      return res.status(500).json({
+        status: "error",
+        error: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+    }
+  });
+
   // Get products by type
   app.get("/api/products", async (req, res) => {
     try {
