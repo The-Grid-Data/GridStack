@@ -105,8 +105,10 @@ Preferred communication style: Simple, everyday language.
 - **Critical:** Server transforms array responses (`theGridRanking[0]`, `profileInfos[0]`) to objects
 
 **API Endpoints:**
-- `GET /api/products/:typeId` - Fetch products by category type ID
-- Returns transformed product data with connection scores
+- `GET /api/products?productTypeIds={ids}&limit={num}` - Fetch products by category type IDs (comma-separated)
+- `GET /api/products/:productId` - Get single product details by UUID
+- `POST /api/products/relationships` - Get relationship data for multiple products
+- All endpoints return transformed product data with connection scores
 
 **Data Transformation:**
 ```typescript
@@ -138,14 +140,16 @@ The application uses these specific product type IDs:
 
 **Client-Side Calculation:**
 1. Compare selected products pairwise
-2. **Shared Chains:** 20 points per matching blockchain deployment
-3. **Shared Assets:** 10 points per matching supported asset
-4. **Compatibility Threshold:** 30+ points = compatible
+2. **Shared Chains:** 10 points per matching blockchain deployment (max 30 points)
+3. **Shared Assets:** 10 points per matching supported asset (max 30 points)
+4. **Maximum Score:** 60 points (30 from chains + 30 from assets)
+5. **Compatibility Threshold:** 30+ points = compatible
 
 **Example:**
 - Product A supports: Ethereum, Solana, USDC, ETH
 - Product B supports: Ethereum, Bitcoin, USDC, BTC
-- Score: Ethereum (20) + USDC (10) = 30 points → Compatible ✓
+- Score: Ethereum (10) + USDC (10) = 20 points → Partial compatibility
+- Score: Ethereum + Polygon + Base (10 + 10 + 10) + USDC (10) = 40 points → Compatible ✓
 
 ### Data Storage
 
