@@ -291,7 +291,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         limit,
       });
 
-      // Transform products: profileInfos is an array, take first element
+      // Transform products: profileInfos and theGridRanking are arrays, take first element
       const products = (data.products || []).map((product: any) => ({
         ...product,
         root: {
@@ -302,6 +302,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             icon: null,
             descriptionShort: product.description,
             profileSector: null,
+          },
+          theGridRanking: product.root?.theGridRanking?.[0] || {
+            connectionScore: 0,
           },
         },
       }));
@@ -329,11 +332,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         productId,
       });
 
-      const product = data.products?.[0];
+      const rawProduct = data.products?.[0];
       
-      if (!product) {
+      if (!rawProduct) {
         return res.status(404).json({ error: "Product not found" });
       }
+
+      // Transform product: profileInfos and theGridRanking are arrays, take first element
+      const product = {
+        ...rawProduct,
+        root: {
+          ...rawProduct.root,
+          profileInfos: rawProduct.root?.profileInfos?.[0] || {
+            name: rawProduct.name,
+            logo: null,
+            icon: null,
+            descriptionShort: rawProduct.description,
+            profileSector: null,
+          },
+          theGridRanking: rawProduct.root?.theGridRanking?.[0] || {
+            connectionScore: 0,
+          },
+        },
+      };
 
       res.json(product);
     } catch (error) {
@@ -358,7 +379,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         productIds,
       });
 
-      res.json(data.products || []);
+      // Transform products: profileInfos and theGridRanking are arrays, take first element
+      const products = (data.products || []).map((product: any) => ({
+        ...product,
+        root: {
+          ...product.root,
+          profileInfos: product.root?.profileInfos?.[0] || {
+            name: product.name,
+            logo: null,
+            icon: null,
+            descriptionShort: product.description,
+            profileSector: null,
+          },
+          theGridRanking: product.root?.theGridRanking?.[0] || {
+            connectionScore: 0,
+          },
+        },
+      }));
+
+      res.json(products);
     } catch (error) {
       console.error("Error fetching product relationships:", error);
       res.status(500).json({ 
