@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 
-const GRID_API_URL = "https://beta.node.thegrid.id/v1/graphql";
+const GRID_API_URL = "https://beta.node.thegrid.id/graphql";
 
 // GraphQL query to get products by type
 const GET_PRODUCTS_BY_TYPE_QUERY = `
