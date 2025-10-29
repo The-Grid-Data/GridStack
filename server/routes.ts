@@ -201,15 +201,11 @@ async function queryGraphQL(query: string, variables: any) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Debug endpoint to test GraphQL queries
+  // Debug endpoint to test GraphQL queries (for development)
   app.get("/api/debug/test-query", async (req, res) => {
     try {
       const productTypeIds = ["1"]; // Wallet type
       const limit = 3;
-      
-      console.log("=== DEBUG: Testing GraphQL Query ===");
-      console.log("Query:", GET_PRODUCTS_BY_TYPE_QUERY);
-      console.log("Variables:", { productTypeIds, limit });
       
       const response = await fetch(GRID_API_URL, {
         method: "POST",
@@ -223,8 +219,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       const responseText = await response.text();
-      console.log("Response status:", response.status);
-      console.log("Response text:", responseText);
       
       let data;
       try {
@@ -248,10 +242,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const products = data.data?.products || [];
-      console.log(`Found ${products.length} products`);
-      if (products.length > 0) {
-        console.log("First product structure:", JSON.stringify(products[0], null, 2));
-      }
       
       return res.json({
         status: "success",
