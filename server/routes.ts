@@ -4,12 +4,12 @@ import { createServer, type Server } from "http";
 const GRID_API_URL = "https://beta.node.thegrid.id/graphql";
 
 // GraphQL query to get products by type
+// Note: profileInfos is an array in the API response
 const GET_PRODUCTS_BY_TYPE_QUERY = `
   query GetProductsByType($productTypeIds: [String!], $limit: Int = 50) {
     products(
       where: {
         productTypeId: {_in: $productTypeIds}
-        productStatusId: {_eq: "5"}
       }
       limit: $limit
     ) {
@@ -282,7 +282,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         limit,
       });
 
-      res.json(data.products || []);
+      // Transform products: profileInfos is an array, take first element
+      const products = (data.products || []).map((product: any) => ({
+        ...product,
+        root: {
+          ...product.root,
+          profileInfos: product.root?.profileInfos?.[0] || {
+            name: product.name,
+            logo: null,
+            icon: null,
+            descriptionShort: product.description,
+            profileSector: null,
+          },
+        },
+      }));
+
+      res.json(products);
     } catch (error) {
       console.error("Error fetching products:", error);
       res.status(500).json({ 
