@@ -139,11 +139,12 @@ export function sortByConnectionScore(products: Product[]): Product[] {
     return scoreB - scoreA; // Descending order - highest first
   });
   
-  // Debug logging
-  console.log('🔢 Sorted products by connection score:', 
-    sorted.slice(0, 5).map(p => ({
+  // Debug logging - show top 20 products with scores
+  console.log('🔢 Sorted products by connection score (Top 20):', 
+    sorted.slice(0, 20).map((p, index) => ({
+      rank: index + 1,
       name: p.name,
-      score: p.root.theGridRanking?.connectionScore
+      connectionScore: p.root.theGridRanking?.connectionScore ?? 0
     }))
   );
   
