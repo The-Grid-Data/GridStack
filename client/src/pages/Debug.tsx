@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { AlertCircle, CheckCircle, Loader2 } from "lucide-react";
+import { useState } from "react";
 
 export default function Debug() {
   const [testing, setTesting] = useState(false);
@@ -12,7 +12,7 @@ export default function Debug() {
   const testQuery = async () => {
     setTesting(true);
     setResult(null);
-    
+
     try {
       const response = await fetch('/api/debug/test-query');
       const data = await response.json();
@@ -46,8 +46,8 @@ export default function Debug() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button 
-              onClick={testQuery} 
+            <Button
+              onClick={testQuery}
               disabled={testing}
               data-testid="button-test-api"
             >
@@ -76,14 +76,14 @@ export default function Debug() {
                   {queryInfo.endpoint}
                 </code>
               </div>
-              
+
               <div>
                 <h3 className="font-semibold text-sm mb-2">Variables:</h3>
                 <pre className="text-xs bg-muted p-4 rounded overflow-auto">
                   {JSON.stringify(queryInfo.variables, null, 2)}
                 </pre>
               </div>
-              
+
               <div>
                 <h3 className="font-semibold text-sm mb-2">GraphQL Query:</h3>
                 <pre className="text-xs bg-muted p-4 rounded overflow-auto max-h-96">
@@ -125,7 +125,7 @@ export default function Debug() {
                       Products Found: {result.productCount}
                     </Badge>
                   </div>
-                  
+
                   {result.firstProduct && (
                     <div className="space-y-2">
                       <h3 className="font-semibold text-sm">First Product Preview:</h3>
@@ -151,7 +151,7 @@ export default function Debug() {
                           </div>
                           <div>
                             <span className="font-medium">Connection Score:</span>{' '}
-                            {result.firstProduct.root?.theGridRanking?.connectionScore || '❌ MISSING'}
+                            {result.firstProduct.root?.gridRank?.score || '❌ MISSING'}
                           </div>
                         </div>
                       </div>

@@ -1,4 +1,3 @@
-import { z } from "zod";
 
 // The Grid API Response Types (based on profile-first approach)
 
@@ -15,13 +14,13 @@ export interface ProfileInfo {
   };
 }
 
-export interface TheGridRanking {
-  connectionScore?: number;
+export interface GridRank {
+  score?: number;
 }
 
 export interface Root {
   profileInfos: ProfileInfo;
-  theGridRanking?: TheGridRanking;
+  gridRank?: GridRank;
 }
 
 export interface ProductType {

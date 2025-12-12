@@ -1,16 +1,16 @@
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { TrendingUp, ExternalLink, Check } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Product } from "@shared/schema";
+import { Check, ExternalLink, TrendingUp } from "lucide-react";
 
 interface ProductDetailModalProps {
   product: Product | null;
@@ -21,9 +21,9 @@ interface ProductDetailModalProps {
   stackProducts?: Product[];
 }
 
-export function ProductDetailModal({ 
-  product, 
-  open, 
+export function ProductDetailModal({
+  product,
+  open,
   onClose,
   selected = false,
   onToggleSelect,
@@ -32,7 +32,7 @@ export function ProductDetailModal({
   if (!product) return null;
 
   const profile = product.root.profileInfos;
-  const connectionScore = product.root.theGridRanking?.connectionScore;
+  const connectionScore = product.root.gridRank?.score;
   const imageUrl = profile.icon || profile.logo;
   const initials = profile.name?.substring(0, 2).toUpperCase() || '??';
 
@@ -49,8 +49,8 @@ export function ProductDetailModal({
         <DialogHeader>
           <div className="flex items-start gap-4">
             {imageUrl ? (
-              <img 
-                src={imageUrl} 
+              <img
+                src={imageUrl}
                 alt={profile.name}
                 className="w-16 h-16 md:w-20 md:h-20 rounded-lg object-cover"
                 onError={(e) => {
@@ -62,12 +62,12 @@ export function ProductDetailModal({
                 <span className="text-2xl font-semibold text-primary">{initials}</span>
               </div>
             )}
-            
+
             <div className="flex-1 space-y-2">
               <DialogTitle className="text-2xl md:text-3xl font-semibold">
                 {profile.name}
               </DialogTitle>
-              
+
               <div className="flex flex-wrap gap-2">
                 {product.productType && (
                   <Badge variant="outline">{product.productType.name}</Badge>
@@ -236,7 +236,7 @@ export function ProductDetailModal({
               <Button variant="outline" onClick={onClose}>
                 Close
               </Button>
-              <Button 
+              <Button
                 onClick={() => {
                   onToggleSelect();
                   onClose();

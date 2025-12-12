@@ -33,9 +33,7 @@ const GET_PRODUCTS_BY_TYPE_QUERY = `
             slug
           }
         }
-        theGridRanking {
-          connectionScore
-        }
+        gridRank { score }
       }
       productDeployments {
         smartContractDeployment {
@@ -84,9 +82,7 @@ const GET_PRODUCT_DETAILS_QUERY = `
             name
           }
         }
-        theGridRanking {
-          connectionScore
-        }
+        gridRank { score }
       }
       productDeployments {
         smartContractDeployment {
@@ -146,9 +142,7 @@ const GET_PRODUCT_RELATIONSHIPS_QUERY = `
             slug
           }
         }
-        theGridRanking {
-          connectionScore
-        }
+        gridRank { score }
       }
       supportsProducts {
         supportsProduct {
@@ -192,7 +186,7 @@ async function queryGraphQL(query: string, variables: any) {
   }
 
   const data = await response.json();
-  
+
   if (data.errors) {
     throw new Error(`GraphQL errors: ${JSON.stringify(data.errors)}`);
   }
@@ -206,7 +200,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const productTypeIds = ["1"]; // Wallet type
       const limit = 3;
-      
+
       const response = await fetch(GRID_API_URL, {
         method: "POST",
         headers: {
@@ -217,9 +211,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           variables: { productTypeIds, limit },
         }),
       });
-      
+
       const responseText = await response.text();
-      
+
       let data;
       try {
         data = JSON.parse(responseText);
@@ -230,7 +224,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           responseText,
         });
       }
-      
+
       if (data.errors) {
         console.error("GraphQL Errors:", JSON.stringify(data.errors, null, 2));
         return res.status(200).json({
@@ -240,9 +234,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           rawResponse: data,
         });
       }
-      
+
       const products = data.data?.products || [];
-      
+
       return res.json({
         status: "success",
         productCount: products.length,
@@ -275,13 +269,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const typeIds = productTypeIds.split(",");
-      
+
       const data = await queryGraphQL(GET_PRODUCTS_BY_TYPE_QUERY, {
         productTypeIds: typeIds,
         limit,
       });
 
-      // Transform products: profileInfos and theGridRanking are arrays, take first element
+      // Transform products: profileInfos is an array in API response, take first element
       const products = (data.products || []).map((product: any) => ({
         ...product,
         root: {
@@ -293,16 +287,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             descriptionShort: product.description,
             profileSector: null,
           },
-          theGridRanking: product.root?.theGridRanking?.[0] || {
-            connectionScore: 0,
-          },
+          gridRank: product.root?.gridRank || { score: 0 },
         },
       }));
 
       res.json(products);
     } catch (error) {
       console.error("Error fetching products:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to fetch products",
         message: error instanceof Error ? error.message : "Unknown error"
       });
@@ -323,12 +315,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const rawProduct = data.products?.[0];
-      
+
       if (!rawProduct) {
         return res.status(404).json({ error: "Product not found" });
       }
 
-      // Transform product: profileInfos and theGridRanking are arrays, take first element
+      // Transform product: profileInfos is an array in API response, take first element
       const product = {
         ...rawProduct,
         root: {
@@ -340,16 +332,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             descriptionShort: rawProduct.description,
             profileSector: null,
           },
-          theGridRanking: rawProduct.root?.theGridRanking?.[0] || {
-            connectionScore: 0,
-          },
+          gridRank: rawProduct.root?.gridRank || { score: 0 },
         },
       };
 
       res.json(product);
     } catch (error) {
       console.error("Error fetching product details:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to fetch product details",
         message: error instanceof Error ? error.message : "Unknown error"
       });
@@ -369,7 +359,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         productIds,
       });
 
-      // Transform products: profileInfos and theGridRanking are arrays, take first element
+      // Transform products: profileInfos is an array in API response, take first element
       const products = (data.products || []).map((product: any) => ({
         ...product,
         root: {
@@ -381,16 +371,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             descriptionShort: product.description,
             profileSector: null,
           },
-          theGridRanking: product.root?.theGridRanking?.[0] || {
-            connectionScore: 0,
-          },
+          gridRank: product.root?.gridRank || { score: 0 },
         },
       }));
 
       res.json(products);
     } catch (error) {
       console.error("Error fetching product relationships:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to fetch product relationships",
         message: error instanceof Error ? error.message : "Unknown error"
       });
