@@ -4,12 +4,13 @@
 
 A Web3 stack builder application that helps users select compatible blockchain products based on their use case (trading, gaming, payments, infrastructure). The app demonstrates The Grid's product relationship data by visualizing compatibility between selected products and providing real-time compatibility scoring.
 
-**Version:** 1.0.0  
+**Version:** 1.0.0
 **Status:** Production-ready MVP
 
 **Purpose:** Interactive tool for discovering and building Web3 technology stacks with real-time compatibility scoring based on The Grid's product graph data.
 
 **Key Features:**
+
 - 5 guided use case templates (Trading, Gaming, Payments, DeFi Infrastructure, Developer Tools)
 - Category-based product selection with progressive disclosure
 - Real-time compatibility visualization with graph relationships
@@ -28,9 +29,10 @@ Preferred communication style: Simple, everyday language.
 **Date:** October 29, 2025
 
 ### Core Functionality
+
 1. **Connection Score Sorting**
    - Fixed critical GraphQL API data extraction bug
-   - Server now properly extracts `theGridRanking[0]` and `profileInfos[0]` from array responses
+   - Server now properly extracts `profileInfos[0]` from array responses
    - Products correctly sorted by descending connection score (Ethereum: 1201, Solana: 1195, etc.)
 
 2. **Dark Mode Implementation**
@@ -50,6 +52,7 @@ Preferred communication style: Simple, everyday language.
    - Better visual alignment and professional appearance
 
 ### Code Quality
+
 - Removed debug badge component from production build
 - Clean codebase ready for V1 release
 - Production-ready error handling
@@ -59,23 +62,27 @@ Preferred communication style: Simple, everyday language.
 ### Frontend Architecture
 
 **Framework:** React with TypeScript via Vite
+
 - Single-page application with step-based navigation
 - Client-side routing handled through component state (use-case → product-selection → results)
 - No traditional router; uses conditional rendering based on application state
 
-**State Management:** 
+**State Management:**
+
 - Zustand for global stack state (`useStackStore`)
 - Manages selected use case, products, category progression, and compatibility calculations
 - React Query (@tanstack/react-query) for server state and API data fetching
 - ThemeProvider for dark/light mode state with localStorage persistence
 
 **UI Component System:**
+
 - shadcn/ui with Radix UI primitives
 - Tailwind CSS for styling with custom design tokens
 - Component library follows "New York" style variant
 - Custom CSS variables for theming (dark mode default)
 
 **Key Design Patterns:**
+
 - Progressive disclosure through stepped category selection
 - Information density optimized for technical users
 - Accessibility-first with Radix UI primitives
@@ -83,6 +90,7 @@ Preferred communication style: Simple, everyday language.
 - Keyboard navigation support (Enter key handler)
 
 **Key Components:**
+
 - `UseCaseSelection.tsx` - Initial use case template picker
 - `ProductSelection.tsx` - Category-by-category product selector with Enter key support
 - `CompatibilityResults.tsx` - Final stack visualization and export
@@ -94,33 +102,38 @@ Preferred communication style: Simple, everyday language.
 ### Backend Architecture
 
 **Server:** Express.js with TypeScript
+
 - RESTful API architecture
 - Hot module replacement via Vite in development
 - Static file serving for production builds
 
 **API Design:**
+
 - GraphQL proxy to The Grid's beta API
 - Server-side GraphQL queries for product data by type
 - Product relationship data for compatibility scoring
-- **Critical:** Server transforms array responses (`theGridRanking[0]`, `profileInfos[0]`) to objects
+- **Critical:** Server transforms array responses (`profileInfos[0]`) to objects
 
 **API Endpoints:**
+
 - `GET /api/products?productTypeIds={ids}&limit={num}` - Fetch products by category type IDs (comma-separated)
 - `GET /api/products/:productId` - Get single product details by UUID
 - `POST /api/products/relationships` - Get relationship data for multiple products
 - All endpoints return transformed product data with connection scores
 
 **Data Transformation:**
+
 ```typescript
 // Server extracts first element from arrays before sending to client
-theGridRanking: ranking.theGridRanking?.[0] || null
+gridRank: ranking.gridRank || null
 profileInfos: profileInfos[0] || {}
 ```
 
 **Data Flow:**
+
 1. Client requests products by category (product type IDs)
 2. Server queries The Grid GraphQL API at `https://beta.node.thegrid.id/graphql`
-3. Server extracts `theGridRanking[0]` and `profileInfos[0]` from array responses
+3. Server extracts `profileInfos[0]` from array responses
 4. Response includes product metadata, deployments, assets, and transformed rankings
 5. Client sorts by connection score and calculates compatibility based on shared chains/assets
 
@@ -139,6 +152,7 @@ The application uses these specific product type IDs:
 ### Compatibility Scoring Algorithm
 
 **Client-Side Calculation:**
+
 1. Compare selected products pairwise
 2. **Shared Chains:** 10 points per matching blockchain deployment (max 30 points)
 3. **Shared Assets:** 10 points per matching supported asset (max 30 points)
@@ -146,6 +160,7 @@ The application uses these specific product type IDs:
 5. **Compatibility Threshold:** 30+ points = compatible
 
 **Example:**
+
 - Product A supports: Ethereum, Solana, USDC, ETH
 - Product B supports: Ethereum, Bitcoin, USDC, BTC
 - Score: Ethereum (10) + USDC (10) = 20 points → Partial compatibility
@@ -154,11 +169,13 @@ The application uses these specific product type IDs:
 ### Data Storage
 
 **Current Implementation:** In-memory storage (MemStorage class)
+
 - User data stored in Map structure
 - Suitable for development/demo purposes
 - No persistence layer currently active
 
 **Database Schema (Drizzle ORM):**
+
 - Configured for PostgreSQL via Neon Database
 - Schema defined in `shared/schema.ts`
 - Migration support via drizzle-kit
@@ -169,35 +186,40 @@ The application uses these specific product type IDs:
 ### External Dependencies
 
 **The Grid API:**
+
 - **Endpoint:** `https://beta.node.thegrid.id/graphql` (NOT `/v1/graphql`)
 - **Purpose:** Source of truth for Web3 product data, relationships, and compatibility
 - **Data Retrieved:** Products by type, deployments, assets, relationship scores
 - **Authentication:** None required (public beta endpoint)
 - **Critical Data Structures:**
-  - `theGridRanking` - Array containing connection scores (server extracts `[0]`)
+  - `gridRank` - Object containing connection score
   - `profileInfos` - Array containing product metadata (server extracts `[0]`)
   - `productDeploymentRelationships` - Chain deployments for compatibility
   - `productAssetRelationships` - Asset support for compatibility
 
 **Neon Database:**
+
 - **Service:** PostgreSQL serverless database
 - **Client:** @neondatabase/serverless
 - **Current Status:** Configured but not actively used
 - **Purpose:** Prepared for future user data persistence if needed
 
 **Third-Party UI Libraries:**
+
 - Radix UI components for accessible primitives
 - Lucide React for iconography
 - html2canvas for stack visualization export (PNG)
 - Framer Motion for animations
 
 **Development Tools:**
+
 - Vite for build tooling and dev server
 - Replit-specific plugins for runtime error handling and cartography
 - ESBuild for server-side bundling in production
 - TypeScript for type safety across frontend and backend
 
 **Design System:**
+
 - Google Fonts (Inter) for typography
 - Tailwind CSS with custom configuration
 - CSS variables for dynamic theming (dark mode default)
@@ -206,17 +228,20 @@ The application uses these specific product type IDs:
 ## Technical Implementation Notes
 
 ### Image Handling
+
 - **Preference:** Product icons (square) over logos (rectangular)
 - **Fallback:** If no icon exists, use logo, then fall back to initials badge
 - **Components using images:** ProductCard, StackSummary, CompatibilityGraph, ProductDetailModal
 
 ### Theme System
+
 - **Default:** Dark mode
 - **Storage:** Theme preference saved to localStorage
 - **Toggle:** Global theme toggle button in app header
 - **Implementation:** ThemeProvider manages `theme` state and syncs with DOM `class="dark"`
 
 ### Performance Optimizations
+
 - React Query caching for product data
 - Zustand state management for instant UI updates
 - Client-side compatibility calculations (no server round-trips)
@@ -225,6 +250,7 @@ The application uses these specific product type IDs:
 ## Future Enhancements (Post-V1)
 
 Potential features for future versions:
+
 - Saved stacks with user accounts
 - Stack sharing via unique URLs
 - Community voting on popular stacks

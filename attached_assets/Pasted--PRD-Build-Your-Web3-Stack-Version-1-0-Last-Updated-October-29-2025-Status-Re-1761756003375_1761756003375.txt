@@ -1,7 +1,7 @@
 # PRD: Build Your Web3 Stack
 
-**Version:** 1.0  
-**Last Updated:** October 29, 2025  
+**Version:** 1.0
+**Last Updated:** October 29, 2025
 **Status:** Ready for Development
 
 ---
@@ -22,7 +22,7 @@ A stack builder that lets users select Web3 products based on their needs (tradi
 ## User Flow
 
 ```
-1. Choose use case 
+1. Choose use case
    ↓
 2. Pick products (category by category)
    ↓
@@ -95,9 +95,7 @@ query GetProductsByType($productTypeIds: [String!], $limit: Int = 20) {
           slug
         }
       }
-      theGridRanking {
-        connectionScore
-      }
+      gridRank { score }
     }
     productDeployments {
       smartContractDeployment {
@@ -157,9 +155,7 @@ query GetProductRelationships($productIds: [uuid!]!) {
           slug
         }
       }
-      theGridRanking {
-        connectionScore
-      }
+      gridRank { score }
     }
     supportsProducts {
       supportsProduct {
@@ -222,9 +218,7 @@ query GetProductDetails($productId: uuid!) {
           name
         }
       }
-      theGridRanking {
-        connectionScore
-      }
+      gridRank { score }
     }
     productDeployments {
       smartContractDeployment {
@@ -286,35 +280,35 @@ Products are compatible if they share chains or assets. Score calculated as:
 function calculateCompatibility(product, stack) {
   let score = 0;
   const reasons = [];
-  
+
   // 1. Shared chains (10 points each, max 30)
   const productChains = product.productDeployments.map(
     d => d.smartContractDeployment.deployedOnProduct.id
   );
-  const stackChains = stack.flatMap(p => 
+  const stackChains = stack.flatMap(p =>
     p.productDeployments.map(d => d.smartContractDeployment.deployedOnProduct.id)
   );
   const sharedChains = intersection(productChains, stackChains);
   const chainScore = Math.min(30, sharedChains.length * 10);
   score += chainScore;
-  
+
   if (sharedChains.length > 0) {
     reasons.push(`Shares ${sharedChains.length} chain(s)`);
   }
-  
+
   // 2. Shared assets (10 points each, max 30)
   const productAssets = product.productAssetRelationships.map(a => a.asset.id);
-  const stackAssets = stack.flatMap(p => 
+  const stackAssets = stack.flatMap(p =>
     p.productAssetRelationships.map(a => a.asset.id)
   );
   const sharedAssets = intersection(productAssets, stackAssets);
   const assetScore = Math.min(30, sharedAssets.length * 10);
   score += assetScore;
-  
+
   if (sharedAssets.length > 0) {
     reasons.push(`Supports ${sharedAssets.length} common asset(s)`);
   }
-  
+
   return {
     score,
     compatible: score >= 30,
@@ -336,7 +330,7 @@ function calculateCompatibility(product, stack) {
 
 ## Product Ranking Strategy
 
-Products are displayed in order of **Connection Score** (from `theGridRanking`):
+Products are displayed in order of **Connection Score** (from `gridRank.score`):
 
 1. **High Connection (80-100):** Most popular/integrated products
 2. **Medium Connection (50-79):** Well-connected products
@@ -351,8 +345,8 @@ Connection scores **cannot be used for server-side filtering/ordering**. Instead
 // After fetching products from API
 function sortByConnectionScore(products: Product[]) {
   return products.sort((a, b) => {
-    const scoreA = a.root.theGridRanking?.connectionScore ?? 0;
-    const scoreB = b.root.theGridRanking?.connectionScore ?? 0;
+    const scoreA = a.root.gridRank?.score ?? 0;
+    const scoreB = b.root.gridRank?.score ?? 0;
     return scoreB - scoreA; // Descending order
   });
 }
@@ -393,7 +387,7 @@ Product
     │   └── profileSector    ← Category (DeFi, Gaming, etc.)
     │       ├── name
     │       └── slug
-    └── theGridRanking
+    └── gridRank
         └── connectionScore   ← Popularity metric
 ```
 
@@ -407,7 +401,7 @@ Product
   icon={product.root.profileInfos.icon}
   description={product.root.profileInfos.descriptionShort}
   sector={product.root.profileInfos.profileSector?.name}
-  connectionScore={product.root.theGridRanking?.connectionScore}
+  connectionScore={product.root.gridRank?.score}
 />
 
 // ❌ INCORRECT: Don't use product-level data
@@ -452,7 +446,7 @@ interface StackState {
   useCase: string | null;
   selectedProducts: Record<string, Product>;
   compatibility: CompatibilityResult[];
-  
+
   setUseCase: (useCase: string) => void;
   addProduct: (category: string, product: Product) => void;
   removeProduct: (category: string) => void;
@@ -513,28 +507,28 @@ interface StackState {
 // User journey
 trackEvent('stack_builder_started', { use_case: string });
 trackEvent('use_case_selected', { use_case: string });
-trackEvent('product_added', { 
-  product_id: string, 
+trackEvent('product_added', {
+  product_id: string,
   category: string,
-  connection_score: number 
+  connection_score: number
 });
 trackEvent('product_removed', { product_id: string, category: string });
-trackEvent('compatibility_viewed', { 
+trackEvent('compatibility_viewed', {
   stack_size: number,
-  avg_compatibility_score: number 
+  avg_compatibility_score: number
 });
 
 // Conversions
-trackEvent('stack_completed', { 
+trackEvent('stack_completed', {
   use_case: string,
   product_count: number,
-  avg_connection_score: number 
+  avg_connection_score: number
 });
 trackEvent('stack_exported', { format: 'png' | 'link' });
 trackEvent('stack_shared', { platform: string });
-trackEvent('claim_profile_clicked', { 
+trackEvent('claim_profile_clicked', {
   source: 'stack_builder',
-  product_id?: string 
+  product_id?: string
 });
 ```
 
@@ -571,7 +565,7 @@ trackEvent('claim_profile_clicked', {
 - Product Type: `productType.name`
 - Sector: `root.profileInfos.profileSector.name`
 - Description: `root.profileInfos.descriptionShort`
-- Connection Score: `root.theGridRanking.connectionScore`
+- Connection Score: `root.gridRank.score`
 
 **Card States:**
 - Default: White background, subtle border
@@ -585,7 +579,7 @@ trackEvent('claim_profile_clicked', {
      [Wallet]
         ↓
     [Bridge] ──→ [DEX]
-    
+
 ✅ Compatible (chains & assets match)
 ⚠️  Partial (only chains match)
 ```
@@ -604,7 +598,7 @@ trackEvent('claim_profile_clicked', {
 - 10+ products per category
 - Asset relationships are tagged
 - No API rate limits
-- Connection scores available via `theGridRanking`
+- Connection scores available via `gridRank`
 
 **Minimum Data Quality:**
 - All products have: name, description, logo, status="Live"
@@ -724,10 +718,10 @@ Managed by: 6
 
 ## Contact & Resources
 
-**Project Lead:** Jonathan  
-**Timeline:** 3 weeks to MVP  
-**Tech Stack:** Next.js 14, GraphQL, React Flow, Tailwind, Zustand  
-**Deployment:** Vercel  
+**Project Lead:** Jonathan
+**Timeline:** 3 weeks to MVP
+**Tech Stack:** Next.js 14, GraphQL, React Flow, Tailwind, Zustand
+**Deployment:** Vercel
 
 **Resources:**
 - API Docs: `api@thegrid.id`

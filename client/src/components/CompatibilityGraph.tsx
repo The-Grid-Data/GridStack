@@ -1,7 +1,7 @@
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, AlertCircle, X, TrendingUp } from "lucide-react";
-import type { Product, CompatibilityResult } from "@shared/schema";
+import { Card } from "@/components/ui/card";
+import type { CompatibilityResult, Product } from "@shared/schema";
+import { AlertCircle, Check, TrendingUp, X } from "lucide-react";
 
 interface CompatibilityGraphProps {
   products: Product[];
@@ -79,18 +79,18 @@ export function CompatibilityGraph({ products, compatibility }: CompatibilityGra
             const profile = product.root.profileInfos;
             const imageUrl = profile.icon || profile.logo;
             const initials = profile.name?.substring(0, 2).toUpperCase() || '??';
-            const connectionScore = product.root.theGridRanking?.connectionScore;
+            const connectionScore = product.root.gridRank?.score;
 
             return (
-              <Card 
+              <Card
                 key={product.id}
                 className="p-4"
                 data-testid={`compat-card-${product.id}`}
               >
                 <div className="flex items-center gap-4">
                   {imageUrl ? (
-                    <img 
-                      src={imageUrl} 
+                    <img
+                      src={imageUrl}
                       alt={profile.name}
                       className="w-12 h-12 rounded-lg object-cover"
                       onError={(e) => {
@@ -132,11 +132,11 @@ export function CompatibilityGraph({ products, compatibility }: CompatibilityGra
           <h3 className="text-lg font-semibold mb-4">Compatibility Details</h3>
           <div className="grid gap-3">
             {compatibility.map((result, idx) => {
-              const status = result.compatible ? 'compatible' : 
+              const status = result.compatible ? 'compatible' :
                             result.score >= 10 ? 'partial' : 'incompatible';
-              
+
               return (
-                <Card 
+                <Card
                   key={idx}
                   className={`p-4 ${
                     status === 'compatible' ? 'border-green-600/50' :

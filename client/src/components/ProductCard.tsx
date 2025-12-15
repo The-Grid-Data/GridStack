@@ -1,8 +1,8 @@
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Check, AlertCircle, TrendingUp } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import type { Product } from "@shared/schema";
+import { AlertCircle, Check, TrendingUp } from "lucide-react";
 
 interface ProductCardProps {
   product: Product;
@@ -12,16 +12,16 @@ interface ProductCardProps {
   onViewDetails: () => void;
 }
 
-export function ProductCard({ 
-  product, 
-  selected = false, 
+export function ProductCard({
+  product,
+  selected = false,
   compatibilityScore,
   onSelect,
-  onViewDetails 
+  onViewDetails
 }: ProductCardProps) {
   const profile = product.root.profileInfos;
-  const connectionScore = product.root.theGridRanking?.connectionScore;
-  
+  const connectionScore = product.root.gridRank?.score;
+
   // Determine compatibility status
   let compatibilityStatus: 'compatible' | 'partial' | 'incompatible' | null = null;
   if (compatibilityScore !== undefined) {
@@ -53,8 +53,8 @@ export function ProductCard({
       {/* Connection Score Badge */}
       {connectionScore !== undefined && connectionScore > 0 && (
         <div className="absolute top-4 right-4">
-          <Badge 
-            variant="secondary" 
+          <Badge
+            variant="secondary"
             className="rounded-full px-2 py-1 text-xs font-medium"
             data-testid={`badge-score-${product.id}`}
           >
@@ -75,8 +75,8 @@ export function ProductCard({
         {/* Logo/Icon */}
         <div className="flex items-center gap-4">
           {imageUrl ? (
-            <img 
-              src={imageUrl} 
+            <img
+              src={imageUrl}
               alt={product.name}
               className="w-16 h-16 md:w-20 md:h-20 rounded-lg object-contain bg-card"
               onError={(e) => {
@@ -95,13 +95,13 @@ export function ProductCard({
           <h3 className="text-xl font-semibold" data-testid={`text-name-${product.id}`}>
             {product.name}
           </h3>
-          
+
           {profile.tagLine && (
             <p className="text-sm font-medium text-foreground/90 leading-relaxed">
               {profile.tagLine}
             </p>
           )}
-          
+
           <div className="flex flex-wrap gap-2">
             {product.productType && (
               <Badge variant="outline" className="text-xs">
